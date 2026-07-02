@@ -22,11 +22,3 @@ credentials.json
 
 # Registrations
 Summer_School_2025_Registrations.xlsx
-
-# Student exercise folder: keep only the task sheet visible
-Agent_Based_Modeling_Introduction/agent_based_modeling_mesa/boltzmann_wealth_model/*
-!Agent_Based_Modeling_Introduction/agent_based_modeling_mesa/boltzmann_wealth_model/STUDENT_TASKS.md
-
-# Student exercise folder: keep only the task sheet visible
-Agent_Based_Credit_Risk_Modeling/*
-!Agent_Based_Credit_Risk_Modeling/STUDENT_TASKS.md

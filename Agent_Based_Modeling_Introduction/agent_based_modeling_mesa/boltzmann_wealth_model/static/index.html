@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boltzmann Wealth Model — Money Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="appbar">
+    <h1>💰 Boltzmann Wealth Model — <span class="accent">Money Game</span></h1>
+    <span class="step-counter">Step <span id="step-value">0</span></span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="card">
+        <h2>Controls</h2>
+        <div class="control-row">
+          <button id="reset-btn" class="btn btn-primary">Reset</button>
+          <button id="step-btn" class="btn">Step</button>
+          <button id="play-btn" class="btn btn-accent">Play</button>
+        </div>
+        <label>Play Interval (ms)
+          <input type="range" id="play-interval" min="60" max="1500" step="20" value="400" />
+          <span id="play-interval-value" class="mono">400</span>
+        </label>
+        <label>Field view
+          <select id="view-select">
+            <option value="auto">Auto (heatmap when crowded)</option>
+            <option value="sprites">People (sprites)</option>
+            <option value="heatmap">Wealth heatmap</option>
+          </select>
+        </label>
+        <div class="checkbox-row"><input type="checkbox" id="glide-toggle" checked /><label for="glide-toggle">Glide (smooth motion)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="animate-toggle" checked /><label for="animate-toggle">Flying coins</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="sound-toggle" /><label for="sound-toggle">Sound (cha-ching)</label></div>
+      </div>
+
+      <div class="card">
+        <h2>Presets</h2>
+        <div class="preset-grid">
+          <button class="btn btn-ghost" data-preset="equal_start">Equal start</button>
+          <button class="btn btn-ghost" data-preset="robin_hood">Robin Hood</button>
+          <button class="btn btn-ghost" data-preset="winner_takes">Winner takes most</button>
+          <button class="btn btn-ghost" data-preset="savers">Careful savers</button>
+          <button class="btn btn-ghost" data-preset="continuous">Continuous space</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Model Parameters</h2>
+        <label>Number of Agents <input type="number" id="n" value="60" min="2" max="1000" /></label>
+        <label>Starting wealth each <input type="number" id="initial_wealth" value="1" min="1" max="100" /></label>
+        <label>Space size — Width <input type="number" id="width" value="30" min="2" max="60" /></label>
+        <label>Space size — Height <input type="number" id="height" value="10" min="2" max="60" /></label>
+        <label>Space
+          <select id="space_mode">
+            <option value="grid">Grid (same-cell trade)</option>
+            <option value="continuous" selected>Continuous (radius trade)</option>
+          </select>
+        </label>
+        <label class="continuous-only">Interaction radius <input type="number" id="interaction_radius" value="1" min="0.3" max="6" step="0.1" /></label>
+        <label class="continuous-only">Step size <input type="number" id="step_size" value="1" min="0.1" max="4" step="0.1" /></label>
+        <label>Exchange rule
+          <select id="exchange_rule">
+            <option value="random">Give 1 to random neighbour</option>
+            <option value="give_to_poorer">Give 1 to the poorest neighbour</option>
+            <option value="give_fraction">Give a fraction of wealth</option>
+            <option value="saving_propensity">Saving propensity (pooling)</option>
+          </select>
+        </label>
+        <label id="give_fraction-row">Give fraction <input type="number" id="give_fraction" value="0.5" min="0.05" max="1" step="0.05" /></label>
+        <label id="saving_lambda-row">Saving λ (keep) <input type="number" id="saving_lambda" value="0.5" min="0" max="0.95" step="0.05" /></label>
+        <label>Tax / redistribution
+          <input type="range" id="tax_rate" min="0" max="0.5" step="0.01" value="0" />
+          <span id="tax_rate-value" class="mono">0.00</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>Observe</h2>
+        <div class="checkbox-row"><input type="checkbox" id="theory-toggle" checked /><label for="theory-toggle">Show Boltzmann–Gibbs overlay</label></div>
+        <p id="follow-status" class="hint">Not following anyone (click an agent).</p>
+        <button id="download-csv" class="btn btn-ghost">⬇ Download run CSV</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="kpi-row">
+        <div class="tile"><span class="tile-label">Gini</span><span id="kpi-gini-value" class="tile-value">0.000</span><svg id="kpi-gini-spark" class="spark"></svg></div>
+        <div class="tile"><span class="tile-label">Richest</span><span id="kpi-richest-value" class="tile-value">0</span><svg id="kpi-richest-spark" class="spark"></svg></div>
+        <div class="tile"><span class="tile-label">Broke</span><span id="kpi-broke-value" class="tile-value">0%</span><svg id="kpi-broke-spark" class="spark"></svg></div>
+        <div class="tile"><span class="tile-label">Total wealth</span><span id="kpi-total-value" class="tile-value">0</span><svg id="kpi-total-spark" class="spark"></svg></div>
+        <div class="tile tile-gauge"><span class="tile-label">Inequality gauge</span><svg id="gini-gauge"></svg></div>
+      </div>
+
+      <div class="card">
+        <h2>The field — little people trading money</h2>
+        <svg id="field"></svg>
+      </div>
+
+      <div class="two-col">
+        <div class="card"><h2>Inequality over time (Gini)</h2><svg id="gini-chart"></svg></div>
+        <div class="card"><h2>Lorenz curve</h2><svg id="lorenz-chart"></svg></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card"><h2>Wealth distribution</h2><svg id="histogram"></svg></div>
+        <div class="card"><h2>Distribution on a log scale</h2><svg id="log-dist"></svg></div>
+      </div>
+
+      <div class="card" id="follow-card" style="display:none">
+        <h2>Followed agent — personal wealth over time</h2>
+        <svg id="follow-chart"></svg>
+        <button id="clear-follow" class="btn btn-ghost">Stop following</button>
+      </div>
+
+      <div class="card">
+        <h2>Sensitivity Analysis</h2>
+        <p class="hint">
+          Full-factorial sweep of Number of Agents × Grid Size, repeated with random
+          seeds. The current <em>exchange rule</em>, <em>space</em> and <em>tax</em> settings
+          (left) are held fixed. Reports the mean final Gini across replications.
+        </p>
+        <div class="sensitivity-grid">
+          <fieldset>
+            <legend>Number of Agents</legend>
+            <label>Min <input type="number" id="sens-n-min" value="50" step="10" /></label>
+            <label>Max <input type="number" id="sens-n-max" value="200" step="10" /></label>
+            <label>Step <input type="number" id="sens-n-step" value="50" step="10" /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Grid Size (square)</legend>
+            <label>Min <input type="number" id="sens-grid-min" value="5" step="1" /></label>
+            <label>Max <input type="number" id="sens-grid-max" value="20" step="1" /></label>
+            <label>Step <input type="number" id="sens-grid-step" value="5" step="1" /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Run settings</legend>
+            <label>Replications <input type="number" id="sens-replications" value="5" min="1" max="50" /></label>
+            <label>Steps <input type="number" id="sens-steps" value="100" min="10" max="2000" /></label>
+          </fieldset>
+        </div>
+        <div class="control-row">
+          <button id="sensitivity-btn" class="btn btn-primary">Run Sensitivity Analysis</button>
+          <select id="sensitivity-metric">
+            <option value="mean_final_gini">Mean final Gini</option>
+            <option value="mean_max_wealth">Mean richest-agent wealth</option>
+          </select>
+        </div>
+        <p id="sensitivity-status" class="hint">Idle.</p>
+        <svg id="sensitivity-heatmap"></svg>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="config.js"></script>
+  <script src="sprites.js"></script>
+  <script src="charts.js"></script>
+  <script src="field.js"></script>
+  <script src="sensitivity.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
