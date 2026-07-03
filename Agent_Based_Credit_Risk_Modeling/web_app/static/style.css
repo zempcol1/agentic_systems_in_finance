@@ -1,0 +1,206 @@
+/* Credit-Risk Lab -- dark UI.
+   Colours follow the dataviz reference palette (status good/warning/serious/critical +
+   categorical hues), stepped for a near-black surface. */
+
+:root {
+  --page: #0a0b0d;
+  --card: #121317;
+  --card-hi: #16181d;
+  --text: #f4f5f7;
+  --text-2: #b7bcc6;
+  --muted: #7d828d;
+  --grid: #23252b;
+  --axis: #33363e;
+  --border: #22242b;
+  --border-hi: #2c2f38;
+
+  --blue: #4f8ff7;
+  --violet: #9b8afb;
+  --aqua: #199e70;
+  --gold: #f5b301;
+  --good: #22b455;
+  --warning: #f5b301;
+  --serious: #ec835a;
+  --critical: #e5484d;
+
+  /* accent is re-pointed per tab (blue for Simulation, violet for AI Borrowers) */
+  --accent: var(--blue);
+  --accent-soft: rgba(79, 143, 247, 0.14);
+
+  --radius: 16px;
+  --gap: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body.mode-ai {
+  --accent: var(--violet);
+  --accent-soft: rgba(155, 138, 251, 0.16);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--page);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- app bar -------------------------------------------------------------- */
+.appbar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 22px;
+  height: 60px;
+  background: rgba(14, 15, 18, 0.85);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+}
+.brand { display: flex; align-items: center; gap: 9px; }
+.brand .logo { color: var(--accent); font-size: 18px; transition: color 0.25s; }
+.brand-name { font-size: 16px; font-weight: 600; letter-spacing: 0.2px; }
+.brand-name b { font-weight: 700; color: var(--accent); transition: color 0.25s; }
+
+.tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
+.tab {
+  display: flex; align-items: center; gap: 8px;
+  border: none; background: transparent; color: var(--text-2);
+  font: inherit; font-size: 13px; font-weight: 500;
+  padding: 7px 15px; border-radius: 9px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab .tdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.4; }
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--accent-soft); color: var(--text); }
+.tab.active .tdot { background: var(--accent); opacity: 1; }
+
+.spacer { flex: 1; }
+.month-badge { display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.month-badge .num { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.month-badge .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 3px; }
+.status-pill { font-size: 11px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border-hi); color: var(--muted); }
+.status-pill.running { color: var(--good); border-color: rgba(34, 180, 85, 0.4); }
+.status-pill.done { color: var(--muted); }
+
+/* ---- layout --------------------------------------------------------------- */
+.layout { display: flex; gap: var(--gap); padding: var(--gap); align-items: flex-start; max-width: 1720px; margin: 0 auto; }
+.sidebar { width: 300px; flex: 0 0 300px; display: flex; flex-direction: column; gap: var(--gap); position: sticky; top: 74px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--gap); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.card h2 { font-size: 13px; margin: 0 0 12px; font-weight: 600; color: var(--text); letter-spacing: 0.1px; }
+.lede { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 10px; }
+
+/* AI-only cards appear only on the AI tab */
+.ai-only { display: none; }
+body.mode-ai .ai-only { display: block; }
+
+/* ---- controls ------------------------------------------------------------- */
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  flex: 1; min-width: 60px; padding: 9px 12px;
+  border-radius: 10px; border: 1px solid var(--border-hi);
+  background: var(--card-hi); color: var(--text);
+  font: inherit; font-size: 13px; cursor: pointer;
+  transition: transform 0.06s, background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: #1e2027; border-color: #363a44; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: transparent; color: #08090c; font-weight: 600; }
+.btn-primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn-danger { background: transparent; border-color: rgba(229, 72, 77, 0.45); color: var(--critical); }
+.btn-danger:hover { background: rgba(229, 72, 77, 0.12); }
+
+label.field { display: block; margin: 12px 0; font-size: 12.5px; color: var(--text-2); }
+label.field .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+label.field .val { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+input[type="number"], select {
+  width: 100%; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid var(--border-hi); background: #0d0e11; color: var(--text);
+  font: inherit; font-size: 13px;
+}
+input[type="number"]:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.preset { font-size: 12px; padding: 7px 12px; }
+
+.note { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.note.warn { color: var(--warning); }
+.note.ok { color: var(--good); }
+
+/* ---- KPI tiles ------------------------------------------------------------ */
+.kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--gap); }
+.kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; position: relative; overflow: hidden; }
+.kpi .k-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); }
+.kpi .k-value { font-size: 23px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; }
+.kpi .k-spark { position: absolute; right: 6px; bottom: 6px; width: 66px; height: 26px; opacity: 0.85; }
+.kpi.good .k-value { color: var(--good); }
+.kpi.bad .k-value { color: var(--critical); }
+
+/* ---- field / vault -------------------------------------------------------- */
+.field-card { padding: 14px; }
+.field-head { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+.legend { display: flex; gap: 15px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); }
+.legend .item { display: flex; align-items: center; gap: 6px; }
+.legend .dot { width: 10px; height: 10px; border-radius: 3px; }
+#field { width: 100%; height: 470px; display: block; }
+/* Let the tile background receive hover; overlays must not intercept the pointer. */
+#field text, #field rect.balbar, #field g.fx { pointer-events: none; }
+#field rect.bg { cursor: pointer; }
+.field-select { margin-left: auto; width: auto; padding: 6px 10px; }
+
+/* ---- charts --------------------------------------------------------------- */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.chart-svg { width: 100%; height: 220px; display: block; }
+.chart-legend { display: flex; gap: 15px; font-size: 12px; color: var(--text-2); margin: -4px 0 6px; }
+.chart-legend .swatch { width: 12px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+/* ---- economy strip -------------------------------------------------------- */
+#economy { width: 100%; height: 88px; display: block; }
+
+/* ---- sensitivity ---------------------------------------------------------- */
+.sens-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sens-head h2 { margin: 0; }
+.sens-metric-toggle { display: flex; gap: 0; border: 1px solid var(--border-hi); border-radius: 9px; overflow: hidden; }
+.btn.seg { flex: none; border: none; border-radius: 0; background: transparent; color: var(--text-2); font-size: 12px; padding: 7px 13px; }
+.btn.seg.active { background: var(--accent-soft); color: var(--text); }
+.sens-controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+.sens-controls .grp { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--text-2); }
+.sens-controls .grp .mini { display: flex; gap: 6px; }
+.sens-controls input[type="number"] { width: 62px; }
+.sens-controls select { width: 202px; }
+.sens-controls .btn-primary { flex: 0 0 auto; }
+#sensitivity-heatmap { width: 100%; height: 340px; display: block; }
+.sens-status { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+/* ---- axis / svg text ------------------------------------------------------ */
+.axis line, .axis path { stroke: var(--axis); }
+.grid line { stroke: var(--grid); }
+.tick text { fill: var(--muted); font-size: 10.5px; }
+.axis-label { fill: var(--text-2); font-size: 11px; }
+
+.tooltip {
+  position: fixed; pointer-events: none;
+  background: #05060a; border: 1px solid var(--border-hi); border-radius: 10px;
+  padding: 9px 11px; font-size: 12px; color: var(--text);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  opacity: 0; transition: opacity 0.1s; z-index: 50; max-width: 250px; line-height: 1.45;
+}
+.tooltip .tt-name { font-weight: 700; }
+.tooltip .tt-persona { color: var(--accent); }
+
+@media (max-width: 1100px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; flex: 1; position: static; }
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .tabs { order: 3; }
+}

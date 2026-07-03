@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Credit-Risk Lab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="mode-sim">
+  <header class="appbar">
+    <div class="brand">
+      <span class="logo">◈</span>
+      <span class="brand-name">Credit&#8203;Risk<b>Lab</b></span>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="sim"><span class="tdot"></span>Live Simulation</button>
+      <button class="tab" data-tab="ai"><span class="tdot"></span>AI Borrowers</button>
+    </nav>
+
+    <div class="spacer"></div>
+    <div id="run-status" class="status-pill">idle</div>
+    <div class="month-badge">
+      <span class="num" id="month-num">0</span>
+      <span class="lbl">month</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+      <section class="card">
+        <div class="btn-row">
+          <button class="btn btn-primary" id="play-btn">Play</button>
+          <button class="btn" id="step-btn">Step</button>
+          <button class="btn" id="step12-btn">+12</button>
+        </div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn" id="reset-btn">Reset</button>
+          <button class="btn" id="csv-btn">Export CSV</button>
+        </div>
+        <label class="field" style="margin-top:14px">
+          <div class="row"><span>Speed</span><span class="val"><span id="speed-val">350</span> ms</span></div>
+          <input type="range" id="play-interval" min="60" max="1200" step="20" value="350" />
+        </label>
+      </section>
+
+      <!-- AI-only: persona guide -->
+      <section class="card ai-only">
+        <h2>AI Borrowers</h2>
+        <p class="lede">Each borrower gets a name and a persona. At reset the AI reads every
+          persona and assigns a reliability score that drives how often they miss. Hover a
+          tile to meet them.</p>
+        <div class="note" id="ai-note">Checking availability&hellip;</div>
+      </section>
+
+      <section class="card">
+        <h2>Presets</h2>
+        <div class="preset-row">
+          <button class="btn preset" data-preset="prime">Prime</button>
+          <button class="btn preset" data-preset="subprime">Subprime</button>
+          <button class="btn preset" data-preset="recession">Recession</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Portfolio</h2>
+        <label class="field">
+          <div class="row"><span>Borrowers</span><span class="val" id="n_borrowers-val">60</span></div>
+          <input type="range" id="n_borrowers" min="10" max="200" step="5" value="60" />
+        </label>
+        <label class="field">
+          <div class="row"><span>Principal / loan</span></div>
+          <input type="number" id="principal" min="1000" step="500" value="10000" />
+        </label>
+        <label class="field">
+          <div class="row"><span>Loan term</span><span class="val"><span id="loan_term_months-val">36</span> mo</span></div>
+          <input type="range" id="loan_term_months" min="6" max="120" step="6" value="36" />
+        </label>
+        <label class="field">
+          <div class="row"><span>Base miss probability</span><span class="val" id="base_default_prob-val">0.030</span></div>
+          <input type="range" id="base_default_prob" min="0" max="0.2" step="0.005" value="0.03" />
+        </label>
+        <label class="field">
+          <div class="row"><span>Risk slope</span><span class="val" id="risk_slope-val">3.0</span></div>
+          <input type="range" id="risk_slope" min="0" max="8" step="0.5" value="3" />
+        </label>
+        <label class="field">
+          <div class="row"><span>Misses to default</span><span class="val" id="max_consecutive_misses-val">3</span></div>
+          <input type="range" id="max_consecutive_misses" min="1" max="6" step="1" value="3" />
+        </label>
+        <div class="two-col" style="gap:10px">
+          <label class="field">
+            <div class="row"><span>APR floor</span><span class="val" id="apr_floor-val">4%</span></div>
+            <input type="range" id="apr_floor" min="0" max="0.15" step="0.005" value="0.04" />
+          </label>
+          <label class="field">
+            <div class="row"><span>APR ceiling</span><span class="val" id="apr_ceiling-val">30%</span></div>
+            <input type="range" id="apr_ceiling" min="0.1" max="0.6" step="0.01" value="0.30" />
+          </label>
+        </div>
+        <label class="field">
+          <div class="row"><span>Random seed</span></div>
+          <input type="number" id="seed" step="1" value="42" />
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>Economy</h2>
+        <label class="field">
+          <div class="row"><span>Scheduled shock start</span><span class="val" id="shock_start-val">0</span></div>
+          <input type="range" id="shock_start" min="0" max="60" step="1" value="0" />
+        </label>
+        <div class="two-col" style="gap:10px">
+          <label class="field">
+            <div class="row"><span>Duration</span><span class="val" id="shock_duration-val">6</span></div>
+            <input type="range" id="shock_duration" min="1" max="24" step="1" value="6" />
+          </label>
+          <label class="field">
+            <div class="row"><span>Severity</span><span class="val" id="shock_severity-val">3.0&times;</span></div>
+            <input type="range" id="shock_severity" min="1" max="8" step="0.5" value="3" />
+          </label>
+        </div>
+        <button class="btn btn-danger" id="shock-btn" style="width:100%">&#9889; Trigger recession now</button>
+      </section>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+      <div class="kpi-row" id="kpi-row"></div>
+
+      <section class="card field-card">
+        <div class="field-head">
+          <div class="legend">
+            <span class="item"><span class="dot" style="background:var(--good)"></span>paying</span>
+            <span class="item"><span class="dot" style="background:var(--warning)"></span>missed</span>
+            <span class="item"><span class="dot" style="background:var(--critical)"></span>defaulted</span>
+            <span class="item"><span class="dot" style="background:var(--blue)"></span>paid off</span>
+          </div>
+          <select class="field-select" id="view-select">
+            <option value="auto">Auto</option>
+            <option value="tiles">Tiles</option>
+            <option value="heatmap">Heatmap</option>
+          </select>
+        </div>
+        <svg id="field"></svg>
+      </section>
+
+      <div class="two-col">
+        <section class="card">
+          <h2>Outstanding balance</h2>
+          <svg class="chart-svg" id="chart-outstanding"></svg>
+        </section>
+        <section class="card">
+          <h2>Active vs. defaulted</h2>
+          <div class="chart-legend">
+            <span><span class="swatch" style="background:var(--good)"></span>active</span>
+            <span><span class="swatch" style="background:var(--blue)"></span>paid off</span>
+            <span><span class="swatch" style="background:var(--critical)"></span>defaulted</span>
+          </div>
+          <svg class="chart-svg" id="chart-population"></svg>
+        </section>
+      </div>
+
+      <div class="two-col">
+        <section class="card">
+          <h2>Collected vs. loss</h2>
+          <div class="chart-legend">
+            <span><span class="swatch" style="background:var(--good)"></span>collected</span>
+            <span><span class="swatch" style="background:var(--critical)"></span>loss</span>
+          </div>
+          <svg class="chart-svg" id="chart-cashflow"></svg>
+        </section>
+        <section class="card">
+          <h2>Risk pricing</h2>
+          <svg class="chart-svg" id="chart-pricing"></svg>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>Economy timeline</h2>
+        <svg id="economy"></svg>
+      </section>
+
+      <section class="card">
+        <div class="sens-head">
+          <h2>Sensitivity</h2>
+          <div class="sens-metric-toggle">
+            <button class="btn seg" data-metric="defaulted_share">Defaulted share</button>
+            <button class="btn seg" data-metric="roi">ROI</button>
+            <button class="btn seg" data-metric="default_rate">Default rate</button>
+          </div>
+        </div>
+        <div class="sens-controls">
+          <div class="grp"><span>Y axis (rows)</span>
+            <div class="mini"><select id="sens-y-param"></select></div>
+            <div class="mini">
+              <input type="number" id="sens-y-min" /><input type="number" id="sens-y-max" /><input type="number" id="sens-y-step" />
+            </div>
+          </div>
+          <div class="grp"><span>X axis (columns)</span>
+            <div class="mini"><select id="sens-x-param"></select></div>
+            <div class="mini">
+              <input type="number" id="sens-x-min" /><input type="number" id="sens-x-max" /><input type="number" id="sens-x-step" />
+            </div>
+          </div>
+          <div class="grp"><span>Reps</span>
+            <div class="mini"><input type="number" id="sens-reps" value="3" /></div>
+          </div>
+          <button class="btn btn-primary" id="sens-run">Run sweep</button>
+        </div>
+        <svg id="sensitivity-heatmap"></svg>
+        <div class="sens-status" id="sens-status">Running a default analysis&hellip;</div>
+      </section>
+    </main>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ================= scripts ================= -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // ---- Shared config + global state (loaded before the render modules) ----
+    const PALETTE = {
+      good: "#22b455", warning: "#f5b301", critical: "#e5484d", serious: "#ec835a",
+      blue: "#4f8ff7", aqua: "#199e70", violet: "#9b8afb", gold: "#f5b301",
+      text: "#f4f5f7", text2: "#b7bcc6", muted: "#7d828d", grid: "#23252b", axis: "#33363e",
+      surface: "#121317",
+    };
+
+    function statusColor(b) {
+      if (b.status === "defaulted") return PALETTE.critical;
+      if (b.status === "paid_off") return PALETTE.blue;
+      if (b.consecutive_misses > 0) return PALETTE.warning;
+      return PALETTE.good;
+    }
+
+    const PARAM_DEFAULTS = {
+      n_borrowers: 60, principal: 10000, loan_term_months: 36, base_default_prob: 0.03,
+      risk_slope: 3, max_consecutive_misses: 3, apr_floor: 0.04, apr_ceiling: 0.30, seed: 42,
+      shock_start: 0, shock_duration: 6, shock_severity: 3,
+    };
+
+    const PRESETS = {
+      prime:     { n_borrowers: 60, base_default_prob: 0.015, risk_slope: 2, apr_floor: 0.03, apr_ceiling: 0.18, shock_start: 0 },
+      subprime:  { n_borrowers: 80, base_default_prob: 0.06,  risk_slope: 5, apr_floor: 0.08, apr_ceiling: 0.45, shock_start: 0 },
+      recession: { n_borrowers: 80, base_default_prob: 0.03,  risk_slope: 4, apr_floor: 0.05, apr_ceiling: 0.32, shock_start: 8, shock_duration: 10, shock_severity: 4 },
+    };
+
+    const S = { lastState: null, mode: "sim", sensMetric: "defaulted_share", sensResult: null, sensRan: false };
+
+    const fmtMoney = (v) => "$" + d3.format(",.0f")(v);
+    const fmtPct = (v) => d3.format(".1%")(v);
+    const tooltipEl = () => document.getElementById("tooltip");
+    function showTip(html, ev) {
+      const t = tooltipEl();
+      t.innerHTML = html; t.style.opacity = 1;
+      t.style.left = (ev.clientX + 14) + "px";
+      t.style.top = (ev.clientY + 14) + "px";
+    }
+    function hideTip() { tooltipEl().style.opacity = 0; }
+  </script>
+  <script src="field.js"></script>
+  <script src="charts.js"></script>
+  <script src="economy.js"></script>
+  <script src="sensitivity.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
