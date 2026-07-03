@@ -7,6 +7,12 @@ wifi_access.txt
 # Ignore .pptx files
 *.pptx
 
+# Ignore .pdf files (slides, syllabus)
+*.pdf
+
+# Ignore student task briefs
+STUDENT_TASKS.md
+
 # Ignore .db files
 *.db
 
